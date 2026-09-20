@@ -1,0 +1,1621 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>دعوات — نظام إدارة دعوات المناسبات</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=El+Messiri:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+<style>
+/* ============================================================
+   المتغيرات الأساسية — نظام التصميم
+   ============================================================ */
+:root{
+  --ink:#24211D;
+  --ink-soft:#5B5347;
+  --paper:#F6F1E7;
+  --paper-alt:#EFE7D8;
+  --surface:#FFFFFF;
+  --deep:#16352B;
+  --deep-2:#1F4A3B;
+  --gold:#AD8748;
+  --gold-soft:#D9C6A3;
+  --rose:#9C4A3C;
+  --rose-soft:#E7C9C1;
+  --line:#DDD2BC;
+  --shadow:0 8px 24px rgba(36,33,29,0.08);
+  --shadow-lg:0 16px 40px rgba(22,53,43,0.16);
+  --radius-s:10px;
+  --radius-m:16px;
+  --radius-l:28px;
+  --font-display:'Amiri', serif;
+  --font-ui:'El Messiri', sans-serif;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--font-ui);
+  font-size:16px;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+  min-height:100vh;
+}
+h1,h2,h3{font-family:var(--font-ui);margin:0 0 .4em;font-weight:700;color:var(--ink)}
+p{margin:0 0 1em}
+a{color:inherit}
+button{font-family:var(--font-ui)}
+input,select,textarea{font-family:var(--font-ui)}
+img{max-width:100%;display:block}
+::selection{background:var(--gold-soft)}
+
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+
+@media (prefers-reduced-motion: reduce){
+  *{animation-duration:0.001ms !important;transition-duration:0.001ms !important}
+}
+
+/* ============================================================
+   عناصر عامة
+   ============================================================ */
+.container{max-width:1080px;margin:0 auto;padding:0 20px}
+.narrow{max-width:520px}
+
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:13px 22px;border-radius:100px;border:1px solid transparent;
+  font-size:15.5px;font-weight:600;cursor:pointer;transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+  text-decoration:none;line-height:1;
+}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--deep);color:var(--paper)}
+.btn-primary:hover{background:var(--deep-2)}
+.btn-gold{background:var(--gold);color:var(--surface)}
+.btn-gold:hover{box-shadow:var(--shadow)}
+.btn-rose{background:var(--rose);color:var(--paper)}
+.btn-outline{background:transparent;border-color:var(--line);color:var(--ink)}
+.btn-outline:hover{border-color:var(--ink)}
+.btn-ghost{background:transparent;color:var(--ink-soft);padding:10px 14px}
+.btn-block{width:100%}
+.btn-sm{padding:9px 16px;font-size:14px}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+
+.field{margin-bottom:18px}
+.field label{display:block;font-size:14px;font-weight:600;color:var(--ink-soft);margin-bottom:7px}
+.field input, .field select, .field textarea{
+  width:100%;padding:13px 15px;border:1.5px solid var(--line);border-radius:var(--radius-s);
+  background:var(--surface);color:var(--ink);font-size:15.5px;transition:border-color .15s ease;
+}
+.field input:focus, .field select:focus, .field textarea:focus{border-color:var(--gold)}
+.field .hint{font-size:12.5px;color:var(--ink-soft);margin-top:6px}
+.field textarea{resize:vertical;min-height:100px}
+
+.card{
+  background:var(--surface);border-radius:var(--radius-m);padding:22px;
+  box-shadow:var(--shadow);border:1px solid rgba(221,210,188,.6);
+}
+
+.stack{display:flex;flex-direction:column}
+.gap-1{gap:8px} .gap-2{gap:14px} .gap-3{gap:22px}
+.row{display:flex;align-items:center}
+.between{justify-content:space-between}
+.wrap{flex-wrap:wrap}
+.muted{color:var(--ink-soft)}
+.center-text{text-align:center}
+
+.badge{
+  display:inline-flex;align-items:center;gap:6px;padding:5px 13px;border-radius:100px;
+  font-size:13px;font-weight:600;
+}
+.badge-pending{background:#EFE7D8;color:var(--ink-soft)}
+.badge-confirmed{background:#DCE8E0;color:var(--deep)}
+.badge-declined{background:var(--rose-soft);color:var(--rose)}
+.badge-used{background:#E4D9C2;color:var(--gold)}
+
+.toast{
+  position:fixed;bottom:24px;right:20px;left:20px;margin:0 auto;max-width:420px;
+  background:var(--ink);color:var(--paper);padding:14px 20px;border-radius:var(--radius-s);
+  box-shadow:var(--shadow-lg);z-index:999;font-size:14.5px;text-align:center;
+  opacity:0;transform:translateY(12px);transition:opacity .25s ease, transform .25s ease;pointer-events:none;
+}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.error{background:var(--rose)}
+
+.spinner{
+  width:22px;height:22px;border-radius:50%;border:3px solid var(--paper-alt);
+  border-top-color:var(--deep);animation:spin .8s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-block{display:flex;align-items:center;justify-content:center;padding:60px 0}
+
+.empty{
+  text-align:center;padding:50px 20px;color:var(--ink-soft);
+}
+.empty .em-icon{font-size:38px;margin-bottom:10px;display:block}
+
+/* ============================================================
+   الهيكل العام / التنقل
+   ============================================================ */
+#app{min-height:100vh;display:flex;flex-direction:column}
+
+.topbar{
+  background:var(--deep);color:var(--paper);padding:16px 0;position:sticky;top:0;z-index:50;
+  box-shadow:0 2px 12px rgba(22,53,43,.18);
+}
+.topbar .container{display:flex;align-items:center;justify-content:space-between}
+.brand{font-family:var(--font-display);font-size:22px;font-weight:700;color:var(--paper);text-decoration:none;display:flex;align-items:center;gap:8px}
+.brand .mark{color:var(--gold)}
+.topbar-actions{display:flex;align-items:center;gap:10px}
+.topbar .user-name{font-size:14px;color:var(--gold-soft)}
+.icon-btn{
+  background:transparent;border:1px solid rgba(246,241,231,.25);color:var(--paper);
+  width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;
+}
+
+main{flex:1;padding:32px 0 60px}
+
+.page-head{margin-bottom:26px}
+.page-head h1{font-size:26px}
+.page-head .back-link{
+  display:inline-flex;align-items:center;gap:6px;font-size:14px;color:var(--ink-soft);
+  text-decoration:none;margin-bottom:14px;background:none;border:none;cursor:pointer;padding:0;font-family:var(--font-ui);
+}
+
+.tabs{display:flex;gap:4px;overflow-x:auto;border-bottom:1.5px solid var(--line);margin-bottom:26px;padding-bottom:0}
+.tab-btn{
+  background:none;border:none;padding:12px 16px;font-size:14.5px;font-weight:600;color:var(--ink-soft);
+  cursor:pointer;white-space:nowrap;border-bottom:2.5px solid transparent;margin-bottom:-1.5px;
+}
+.tab-btn.active{color:var(--deep);border-color:var(--gold)}
+
+/* ============================================================
+   المصادقة
+   ============================================================ */
+.auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:
+  radial-gradient(circle at 20% 15%, rgba(173,135,72,.14), transparent 45%),
+  radial-gradient(circle at 85% 85%, rgba(22,53,43,.10), transparent 50%), var(--paper);
+}
+.auth-card{width:100%;max-width:400px}
+.auth-brand{text-align:center;margin-bottom:26px}
+.auth-brand .mark-lg{font-family:var(--font-display);font-size:34px;color:var(--deep)}
+.auth-brand .mark-lg .gold{color:var(--gold)}
+.auth-switch{text-align:center;margin-top:18px;font-size:14.5px;color:var(--ink-soft)}
+.auth-switch button{background:none;border:none;color:var(--deep);font-weight:700;cursor:pointer;text-decoration:underline;font-size:14.5px;font-family:var(--font-ui)}
+
+/* ============================================================
+   لوحة التحكم / بطاقات المناسبات
+   ============================================================ */
+.events-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:18px}
+.search-bar-row{display:flex;gap:10px;margin-bottom:22px;flex-wrap:wrap}
+.search-box{position:relative;flex:1;min-width:220px}
+.search-box .search-icon{position:absolute;top:50%;right:16px;transform:translateY(-50%);color:var(--ink-soft);font-size:15px;pointer-events:none}
+.search-box input{width:100%;padding:13px 46px 13px 16px;border:1.5px solid var(--line);border-radius:100px;background:var(--surface);font-size:15px;color:var(--ink)}
+.search-box input:focus{border-color:var(--gold);outline:none}
+.search-bar-row select{padding:13px 16px;border:1.5px solid var(--line);border-radius:100px;background:var(--surface);font-size:14px;color:var(--ink);cursor:pointer;flex-shrink:0}
+.event-card{
+  background:var(--surface);border-radius:var(--radius-m);overflow:hidden;box-shadow:var(--shadow);
+  border:1px solid rgba(221,210,188,.6);text-decoration:none;color:var(--ink);cursor:pointer;
+  transition:box-shadow .18s ease;display:flex;flex-direction:column;
+}
+.event-card:hover{box-shadow:var(--shadow-lg)}
+.event-card .thumb{width:100%;aspect-ratio:16/10;object-fit:cover;background:var(--paper-alt)}
+.event-card .thumb-placeholder{
+  width:100%;aspect-ratio:16/10;background:linear-gradient(135deg,var(--deep),var(--deep-2));
+  display:flex;align-items:center;justify-content:center;color:var(--gold-soft);font-family:var(--font-display);font-size:26px;
+}
+.event-card .body{padding:16px 18px;flex:1;display:flex;flex-direction:column;gap:6px}
+.event-card h3{font-size:17px;margin:0}
+.event-card .meta{font-size:13.5px;color:var(--ink-soft)}
+.event-card .stats-row{display:flex;gap:14px;margin-top:8px;font-size:12.5px;color:var(--ink-soft)}
+
+/* ============================================================
+   الضيوف
+   ============================================================ */
+.guest-row{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:14px 16px;border-radius:var(--radius-s);background:var(--surface);
+  border:1px solid var(--line);margin-bottom:10px;
+}
+.guest-row .info{display:flex;flex-direction:column;gap:3px;min-width:0}
+.guest-row .g-name{font-weight:700;font-size:15px}
+.guest-row .g-phone{font-size:13px;color:var(--ink-soft);direction:ltr;text-align:right}
+.guest-row .actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.link-copy{
+  background:var(--paper-alt);border:none;border-radius:8px;padding:8px 10px;font-size:12.5px;
+  cursor:pointer;color:var(--ink-soft);
+}
+
+/* ============================================================
+   صفحة الدعوة العامة (تصميم الضيف)
+   ============================================================ */
+.invite-page{background:var(--paper);min-height:100vh;padding-bottom:60px}
+.invite-hero{position:relative;width:100%;aspect-ratio:4/5;max-height:78vh;overflow:hidden;background:linear-gradient(135deg,var(--deep),var(--deep-2))}
+.invite-hero img{width:100%;height:100%;object-fit:cover}
+.invite-hero .hero-fade{position:absolute;inset:0;background:linear-gradient(to top, var(--paper) 0%, rgba(246,241,231,0) 32%)}
+
+.invite-card{
+  max-width:460px;margin:-56px auto 0;position:relative;background:var(--surface);
+  border-radius:32px 32px 0 0;padding:34px 26px 30px;box-shadow:0 -12px 30px rgba(36,33,29,.06);
+  text-align:center;
+}
+.invite-card .event-name{font-family:var(--font-display);font-size:30px;color:var(--deep);margin-bottom:14px;line-height:1.35}
+.invite-card .welcome{font-size:17px;margin-bottom:2px}
+.invite-card .welcome .g-name{font-weight:700;color:var(--deep)}
+.invite-card .sub{font-size:14px;color:var(--ink-soft);margin-bottom:24px}
+
+.invite-details{display:flex;flex-direction:column;gap:12px;text-align:right;background:var(--paper-alt);
+  border-radius:var(--radius-m);padding:18px 20px;margin-bottom:26px}
+.invite-details .d-row{display:flex;align-items:center;gap:10px;font-size:14.5px}
+.invite-details .d-icon{width:20px;text-align:center;flex-shrink:0;color:var(--gold)}
+.invite-desc{font-size:14px;color:var(--ink-soft);margin-bottom:22px;line-height:1.8}
+
+.rsvp-actions{display:flex;flex-direction:column;gap:12px}
+.rsvp-btn{
+  padding:17px 20px;border-radius:var(--radius-m);border:none;font-size:17px;font-weight:700;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:transform .15s ease;
+}
+.rsvp-btn:active{transform:scale(.97)}
+.rsvp-yes{background:var(--deep);color:var(--paper)}
+.rsvp-no{background:var(--surface);color:var(--rose);border:1.5px solid var(--rose-soft)}
+
+.status-msg{padding:22px 18px;border-radius:var(--radius-m);text-align:center;margin-bottom:22px}
+.status-msg.confirmed{background:#DCE8E0;color:var(--deep)}
+.status-msg.declined{background:var(--rose-soft);color:var(--rose)}
+.status-msg .s-icon{font-size:30px;display:block;margin-bottom:8px}
+.status-msg h3{margin-bottom:4px;font-size:18px;color:inherit}
+
+.ticket{background:var(--surface);border:1.5px dashed var(--gold-soft);border-radius:var(--radius-m);padding:26px 20px;position:relative}
+.ticket .t-name{font-size:19px;font-weight:700;margin-bottom:4px}
+.ticket .t-companions{font-size:14px;color:var(--ink-soft);margin-bottom:18px}
+.ticket .perforation{
+  border:none;border-top:2px dotted var(--gold-soft);margin:20px -20px;position:relative;
+}
+.ticket .perforation::before,.ticket .perforation::after{
+  content:'';position:absolute;top:-11px;width:22px;height:22px;border-radius:50%;background:var(--paper);
+}
+.ticket .perforation::before{right:-31px}
+.ticket .perforation::after{left:-31px}
+.ticket .qr-wrap{display:flex;justify-content:center;margin-top:16px}
+.ticket .t-number{font-size:12.5px;color:var(--ink-soft);margin-top:10px}
+
+/* ============================================================
+   الإرسال
+   ============================================================ */
+.send-msgbox{margin-bottom:22px}
+.send-list .guest-row .send-btn{background:#25D366;color:#fff;border:none;border-radius:100px;
+  padding:9px 16px;font-size:13.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px}
+.send-list .guest-row.sent{opacity:.6}
+
+/* ============================================================
+   الإحصائيات
+   ============================================================ */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px}
+.stat-card{background:var(--surface);border-radius:var(--radius-m);padding:20px;text-align:center;border:1px solid var(--line)}
+.stat-card .num{font-size:30px;font-weight:700;color:var(--deep);font-family:var(--font-display)}
+.stat-card .lbl{font-size:13px;color:var(--ink-soft);margin-top:4px}
+
+/* ============================================================
+   الباركود
+   ============================================================ */
+.style-preview{display:flex;justify-content:center;padding:24px;background:var(--paper-alt);border-radius:var(--radius-m);margin-bottom:22px}
+.tickets-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px}
+.ticket-mini{background:#fff;border:1px solid var(--line);border-radius:var(--radius-s);padding:16px 10px;text-align:center}
+.color-row{display:flex;align-items:center;gap:10px}
+.color-row input[type=color]{width:44px;height:44px;padding:2px;border-radius:10px;border:1.5px solid var(--line);cursor:pointer}
+
+/* ============================================================
+   الماسح
+   ============================================================ */
+#qr-reader{width:100%;border-radius:var(--radius-m);overflow:hidden}
+.scan-result{margin-top:18px;padding:22px;border-radius:var(--radius-m);text-align:center}
+.scan-result.ok{background:#DCE8E0;color:var(--deep)}
+.scan-result.used{background:var(--rose-soft);color:var(--rose)}
+.scan-result .sr-icon{font-size:34px;display:block;margin-bottom:8px}
+
+/* ============================================================
+   نافذة منبثقة
+   ============================================================ */
+.modal-bg{position:fixed;inset:0;background:rgba(36,33,29,.55);z-index:100;display:flex;align-items:flex-end;justify-content:center}
+.modal-box{background:var(--surface);width:100%;max-width:480px;border-radius:24px 24px 0 0;padding:26px 22px 30px;max-height:88vh;overflow-y:auto}
+@media(min-width:640px){
+  .modal-bg{align-items:center}
+  .modal-box{border-radius:var(--radius-m)}
+}
+
+/* ============================================================
+   استجابة
+   ============================================================ */
+@media(max-width:480px){
+  .container{padding:0 16px}
+  .invite-card{border-radius:26px 26px 0 0;padding:28px 18px 26px}
+  .invite-card .event-name{font-size:25px}
+}
+</style>
+</head>
+<body>
+
+<div id="app"></div>
+<div id="toast" class="toast"></div>
+
+<script>
+'use strict';
+
+/* ============================================================
+   الإعدادات — ضع بيانات مشروعك في Supabase هنا
+   ============================================================ */
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const STORAGE_BUCKET = 'invitations';
+
+/* ============================================================
+   الحالة العامة
+   ============================================================ */
+const state = {
+  user: null,
+  events: [],
+  currentEvent: null,
+  guests: [],
+  genericTickets: [],
+  barcodeFolders: [],
+  barcodeSettings: null,
+  authMode: 'login', // login | signup
+  eventSearchQuery: '',
+  eventSortOrder: 'newest', // newest | oldest
+};
+
+/* ============================================================
+   أدوات مساعدة عامة
+   ============================================================ */
+function $(sel, root){ return (root||document).querySelector(sel); }
+function $all(sel, root){ return Array.from((root||document).querySelectorAll(sel)); }
+
+function mount(html){
+  $('#app').innerHTML = html;
+  window.scrollTo(0,0);
+}
+
+function escapeHtml(str){
+  if(str === null || str === undefined) return '';
+  return String(str)
+    .replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;')
+    .replaceAll('"','&quot;').replaceAll("'",'&#39;');
+}
+
+let toastTimer = null;
+function toast(msg, isError){
+  const el = $('#toast');
+  el.textContent = msg;
+  el.className = 'toast show' + (isError ? ' error' : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>{ el.className = 'toast'; }, 3200);
+}
+
+function formatDateAr(dateStr){
+  if(!dateStr) return '';
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString('ar-SA-u-ca-gregory', { year:'numeric', month:'long', day:'numeric' });
+}
+function formatTimeAr(timeStr){
+  if(!timeStr) return '';
+  const [h,m] = timeStr.split(':');
+  const d = new Date(); d.setHours(+h, +m, 0);
+  return d.toLocaleTimeString('ar-SA', { hour:'numeric', minute:'2-digit' });
+}
+function formatDateTimeStamp(dateStr, timeStr){
+  if(!dateStr) return '';
+  return formatDateAr(dateStr) + (timeStr ? ' — ' + formatTimeAr(timeStr) : '');
+}
+function formatArDateTime(isoTimestamp){
+  if(!isoTimestamp) return '';
+  const d = new Date(isoTimestamp);
+  const datePart = d.toLocaleDateString('ar-SA-u-ca-gregory', { year:'numeric', month:'long', day:'numeric' });
+  const timePart = d.toLocaleTimeString('ar-SA', { hour:'numeric', minute:'2-digit' });
+  return datePart + ' — ' + timePart;
+}
+
+function normalizePhoneForWa(phone){
+  // يحوّل 05xxxxxxxx إلى 9665xxxxxxxx (صيغة دولية لروابط واتساب)
+  let p = (phone||'').replace(/\D/g,'');
+  if(p.startsWith('0')) p = '966' + p.slice(1);
+  else if(!p.startsWith('966')) p = '966' + p;
+  return p;
+}
+function isValidSaudiPhone(phone){
+  return /^05\d{8}$/.test((phone||'').trim());
+}
+
+function getQueryParam(name){
+  return new URLSearchParams(location.search).get(name);
+}
+
+function buildInviteUrl(inviteToken){
+  return location.origin + location.pathname + '?invite=' + inviteToken;
+}
+function buildOwnerStatsUrl(ownerToken){
+  return location.origin + location.pathname + '?owner=' + ownerToken;
+}
+
+function copyToClipboard(text){
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(()=>toast('تم نسخ الرابط')).catch(()=>fallbackCopy(text));
+  } else fallbackCopy(text);
+}
+function fallbackCopy(text){
+  const ta = document.createElement('textarea');
+  ta.value = text; document.body.appendChild(ta); ta.select();
+  try{ document.execCommand('copy'); toast('تم نسخ الرابط'); }catch(e){ toast('تعذر النسخ', true); }
+  document.body.removeChild(ta);
+}
+
+function companionsText(count, format){
+  count = count || 0;
+  if(count <= 0) return '';
+  if(format === 'format2') return `عدد المرافقين / ${count}`;
+  return `هذه الدعوة تشمل ${count} أشخاص`;
+}
+
+function openModal(html){
+  const bg = document.createElement('div');
+  bg.className = 'modal-bg';
+  bg.id = 'active-modal';
+  bg.innerHTML = `<div class="modal-box">${html}</div>`;
+  bg.addEventListener('click', (e)=>{ if(e.target === bg) closeModal(); });
+  document.body.appendChild(bg);
+}
+function closeModal(){
+  const m = $('#active-modal');
+  if(m) m.remove();
+}
+
+async function uploadEventImage(file, userId, eventId){
+  let ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '');
+  if(!ext) ext = 'jpg';
+  const path = `${userId}/${eventId}/cover.${ext}`;
+  const { error } = await supabaseClient.storage.from(STORAGE_BUCKET).upload(path, file, { upsert: true });
+  if(error) throw error;
+  const { data } = supabaseClient.storage.from(STORAGE_BUCKET).getPublicUrl(path);
+  return data.publicUrl;
+}
+
+function setBtnLoading(btn, loading, textWhenLoading){
+  if(loading){
+    btn.dataset.originalText = btn.innerHTML;
+    btn.innerHTML = textWhenLoading || '...جاري التنفيذ';
+    btn.disabled = true;
+  } else {
+    btn.innerHTML = btn.dataset.originalText || btn.innerHTML;
+    btn.disabled = false;
+  }
+}
+
+
+/* ============================================================
+   المصادقة
+   ============================================================ */
+async function checkSession(){
+  const { data } = await supabaseClient.auth.getSession();
+  state.user = data.session ? data.session.user : null;
+}
+
+async function handleSignup(e){
+  e.preventDefault();
+  const btn = $('#auth-submit-btn');
+  const name = $('#su-name').value.trim();
+  const email = $('#su-email').value.trim();
+  const password = $('#su-password').value;
+  if(!name || !email || password.length < 6){
+    toast('يرجى تعبئة جميع الحقول (كلمة المرور 6 أحرف على الأقل)', true);
+    return;
+  }
+  setBtnLoading(btn, true, '...جاري إنشاء الحساب');
+  const { data, error } = await supabaseClient.auth.signUp({
+    email, password,
+    options: { data: { name } }
+  });
+  setBtnLoading(btn, false);
+  if(error){ toast(error.message, true); return; }
+  if(data.session){
+    state.user = data.session.user;
+    toast('تم إنشاء الحساب بنجاح');
+    location.hash = '#/dashboard';
+    route();
+  } else {
+    toast('تم إنشاء الحساب — يرجى تأكيد البريد الإلكتروني إن طُلب ذلك ثم تسجيل الدخول');
+    state.authMode = 'login';
+    renderLogin();
+  }
+}
+
+async function handleLogin(e){
+  e.preventDefault();
+  const btn = $('#auth-submit-btn');
+  const email = $('#li-email').value.trim();
+  const password = $('#li-password').value;
+  if(!email || !password){ toast('يرجى إدخال البريد الإلكتروني وكلمة المرور', true); return; }
+  setBtnLoading(btn, true, '...جاري الدخول');
+  const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+  setBtnLoading(btn, false);
+  if(error){ toast('بيانات الدخول غير صحيحة', true); return; }
+  state.user = data.user;
+  location.hash = '#/dashboard';
+  route();
+}
+
+async function handleLogout(){
+  await supabaseClient.auth.signOut();
+  state.user = null;
+  state.events = [];
+  location.hash = '#/login';
+  route();
+}
+
+function currentUserName(){
+  if(!state.user) return '';
+  return (state.user.user_metadata && state.user.user_metadata.name) || state.user.email;
+}
+
+function renderLogin(){
+  state.authMode = 'login';
+  mount(`
+    <div class="auth-wrap">
+      <div class="auth-card">
+        <div class="auth-brand">
+          <div class="mark-lg">دعو<span class="gold">ات</span></div>
+          <p class="muted" style="margin-top:6px">تسجيل الدخول إلى لوحة التحكم</p>
+        </div>
+        <div class="card">
+          <form onsubmit="handleLogin(event)">
+            <div class="field">
+              <label>البريد الإلكتروني</label>
+              <input id="li-email" type="email" required autocomplete="email" placeholder="example@email.com">
+            </div>
+            <div class="field">
+              <label>كلمة المرور</label>
+              <input id="li-password" type="password" required autocomplete="current-password" placeholder="••••••••">
+            </div>
+            <button id="auth-submit-btn" type="submit" class="btn btn-primary btn-block">تسجيل الدخول</button>
+          </form>
+        </div>
+        <div class="auth-switch">
+          ليس لديك حساب؟ <button onclick="renderSignup()">إنشاء حساب جديد</button>
+        </div>
+      </div>
+    </div>
+  `);
+}
+
+function renderSignup(){
+  state.authMode = 'signup';
+  mount(`
+    <div class="auth-wrap">
+      <div class="auth-card">
+        <div class="auth-brand">
+          <div class="mark-lg">دعو<span class="gold">ات</span></div>
+          <p class="muted" style="margin-top:6px">إنشاء حساب جديد</p>
+        </div>
+        <div class="card">
+          <form onsubmit="handleSignup(event)">
+            <div class="field">
+              <label>الاسم</label>
+              <input id="su-name" type="text" required autocomplete="name" placeholder="اسمك الكامل">
+            </div>
+            <div class="field">
+              <label>البريد الإلكتروني</label>
+              <input id="su-email" type="email" required autocomplete="email" placeholder="example@email.com">
+            </div>
+            <div class="field">
+              <label>كلمة المرور</label>
+              <input id="su-password" type="password" required autocomplete="new-password" placeholder="6 أحرف على الأقل">
+            </div>
+            <button id="auth-submit-btn" type="submit" class="btn btn-primary btn-block">إنشاء الحساب</button>
+          </form>
+        </div>
+        <div class="auth-switch">
+          لديك حساب بالفعل؟ <button onclick="renderLogin()">تسجيل الدخول</button>
+        </div>
+      </div>
+    </div>
+  `);
+}
+
+
+/* ============================================================
+   المناسبات
+   ============================================================ */
+async function fetchEvents(){
+  const { data, error } = await supabaseClient
+    .from('events').select('*').order('created_at', { ascending: false });
+  if(error){ toast('تعذر تحميل المناسبات', true); return []; }
+  state.events = data;
+  return data;
+}
+
+async function fetchEventCounts(eventId){
+  const { count: total } = await supabaseClient.from('guests').select('*', { count:'exact', head:true }).eq('event_id', eventId);
+  const { count: confirmed } = await supabaseClient.from('guests').select('*', { count:'exact', head:true }).eq('event_id', eventId).eq('status','confirmed');
+  return { total: total||0, confirmed: confirmed||0 };
+}
+
+async function handleCreateEvent(e){
+  e.preventDefault();
+  const btn = $('#event-submit-btn');
+  const name = $('#ev-name').value.trim();
+  const date = $('#ev-date').value;
+  const time = $('#ev-time').value;
+  const location = $('#ev-location').value.trim();
+  const description = $('#ev-desc').value.trim();
+  const imageFile = $('#ev-image').files[0] || null;
+  if(!name || !date || !time || !location){
+    toast('يرجى تعبئة الحقول المطلوبة', true); return;
+  }
+  setBtnLoading(btn, true, '...جاري الحفظ');
+  try{
+    const { data: inserted, error } = await supabaseClient.from('events').insert({
+      user_id: state.user.id, name, event_date: date, event_time: time,
+      location, description
+    }).select().single();
+    if(error) throw error;
+
+    // الصورة اختيارية بالكامل — فشل رفعها (مثلاً Bucket غير موجود) لا يجب أن يوقف إنشاء المناسبة
+    if(imageFile){
+      try{
+        const url = await uploadEventImage(imageFile, state.user.id, inserted.id);
+        await supabaseClient.from('events').update({ image_url: url }).eq('id', inserted.id);
+        toast('تم إنشاء المناسبة');
+      }catch(imgErr){
+        toast('تم إنشاء المناسبة، لكن تعذر رفع الصورة: ' + (imgErr.message || 'تحقق من إعداد Storage'), true);
+      }
+    } else {
+      toast('تم إنشاء المناسبة');
+    }
+
+    closeModal();
+    await fetchEvents();
+    location.hash = '#/event/' + inserted.id;
+    route();
+  }catch(err){
+    toast(err.message || 'حدث خطأ أثناء الحفظ', true);
+  }finally{
+    setBtnLoading(btn, false);
+  }
+}
+
+async function handleDeleteEvent(eventId){
+  if(!confirm('هل تريد حذف هذه المناسبة؟ سيتم حذف جميع الضيوف والبيانات المرتبطة بها.')) return;
+  const { error } = await supabaseClient.from('events').delete().eq('id', eventId);
+  if(error){ toast('تعذر الحذف', true); return; }
+  toast('تم حذف المناسبة');
+  await fetchEvents();
+  location.hash = '#/dashboard';
+  route();
+}
+
+function openCreateEventModal(){
+  openModal(`
+    <h2 style="margin-bottom:18px">إنشاء مناسبة جديدة</h2>
+    <form onsubmit="handleCreateEvent(event)">
+      <div class="field">
+        <label>اسم المناسبة</label>
+        <input id="ev-name" type="text" required placeholder="مثال: حفل زفاف شذى">
+      </div>
+      <div class="field">
+        <label>صورة الدعوة</label>
+        <input id="ev-image" type="file" accept="image/*">
+      </div>
+      <div class="row gap-2" style="align-items:flex-start">
+        <div class="field" style="flex:1">
+          <label>تاريخ المناسبة</label>
+          <input id="ev-date" type="date" required>
+        </div>
+        <div class="field" style="flex:1">
+          <label>وقت المناسبة</label>
+          <input id="ev-time" type="time" required>
+        </div>
+      </div>
+      <div class="field">
+        <label>الموقع</label>
+        <input id="ev-location" type="text" required placeholder="اسم القاعة أو المكان">
+      </div>
+      <div class="field">
+        <label>وصف اختياري</label>
+        <textarea id="ev-desc" placeholder="نص ترحيبي أو تفاصيل إضافية"></textarea>
+      </div>
+      <div class="row gap-2" style="margin-top:22px">
+        <button type="button" class="btn btn-outline" style="flex:1" onclick="closeModal()">إلغاء</button>
+        <button id="event-submit-btn" type="submit" class="btn btn-primary" style="flex:1">حفظ المناسبة</button>
+      </div>
+    </form>
+  `);
+}
+
+function getFilteredSortedEvents(){
+  const q = (state.eventSearchQuery || '').trim().toLowerCase();
+  let list = state.events;
+  if(q){
+    list = list.filter(ev =>
+      (ev.name || '').toLowerCase().includes(q) || (ev.location || '').toLowerCase().includes(q)
+    );
+  }
+  list = [...list].sort((a,b) => {
+    const da = new Date(a.created_at).getTime(), db = new Date(b.created_at).getTime();
+    return state.eventSortOrder === 'oldest' ? da - db : db - da;
+  });
+  return list;
+}
+
+function eventCardHtml(ev){
+  return `
+    <a href="#/event/${ev.id}" class="event-card">
+      ${ev.image_url
+        ? `<img class="thumb" src="${escapeHtml(ev.image_url)}" alt="">`
+        : `<div class="thumb-placeholder">${escapeHtml(ev.name.slice(0,1))}</div>`}
+      <div class="body">
+        <h3>${escapeHtml(ev.name)}</h3>
+        <div class="meta">${formatDateTimeStamp(ev.event_date, ev.event_time)}</div>
+        <div class="meta">${escapeHtml(ev.location)}</div>
+      </div>
+    </a>
+  `;
+}
+
+function renderEventsGrid(){
+  const container = $('#events-grid-container');
+  if(!container) return;
+  if(state.events.length === 0){
+    container.innerHTML = `<div class="empty"><span class="em-icon">✦</span>لا توجد مناسبات بعد — ابدأ بإنشاء أول مناسبة لك</div>`;
+    return;
+  }
+  const list = getFilteredSortedEvents();
+  if(list.length === 0){
+    container.innerHTML = `<div class="empty"><span class="em-icon">✦</span>لا توجد مناسبات مطابقة للبحث</div>`;
+    return;
+  }
+  container.innerHTML = `<div class="events-grid">${list.map(eventCardHtml).join('')}</div>`;
+}
+
+function onEventSearchInput(){
+  state.eventSearchQuery = $('#event-search').value;
+  renderEventsGrid();
+}
+function onEventSortChange(){
+  state.eventSortOrder = $('#event-sort').value;
+  renderEventsGrid();
+}
+
+function renderDashboard(){
+  mount(`
+    ${renderTopbar()}
+    <main>
+      <div class="container">
+        <div class="page-head row between wrap gap-2">
+          <h1>مناسباتي</h1>
+          <button class="btn btn-gold" onclick="openCreateEventModal()">+ إنشاء مناسبة جديدة</button>
+        </div>
+        ${state.events.length > 0 ? `
+        <div class="search-bar-row">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input id="event-search" type="text" placeholder="ابحث بالاسم أو الموقع" value="${escapeHtml(state.eventSearchQuery)}" oninput="onEventSearchInput()">
+          </div>
+          <select id="event-sort" onchange="onEventSortChange()">
+            <option value="newest" ${state.eventSortOrder==='newest'?'selected':''}>الأحدث أولاً</option>
+            <option value="oldest" ${state.eventSortOrder==='oldest'?'selected':''}>الأقدم أولاً</option>
+          </select>
+        </div>
+        ` : ''}
+        <div id="events-grid-container"></div>
+      </div>
+    </main>
+  `);
+  renderEventsGrid();
+}
+
+async function renderEventDetail(eventId, tab){
+  tab = tab || 'overview';
+  let ev = state.events.find(e => e.id === eventId);
+  if(!ev){
+    const { data, error } = await supabaseClient.from('events').select('*').eq('id', eventId).single();
+    if(error || !data){ toast('المناسبة غير موجودة', true); location.hash = '#/dashboard'; route(); return; }
+    ev = data;
+    state.events.push(ev);
+  }
+  state.currentEvent = ev;
+
+  let contentHtml = '';
+  if(tab === 'overview'){
+    const counts = await fetchEventCounts(eventId);
+    const { count: declined } = await supabaseClient.from('guests').select('*', { count:'exact', head:true }).eq('event_id', eventId).eq('status','declined');
+    const { count: invited } = await supabaseClient.from('guests').select('*', { count:'exact', head:true }).eq('event_id', eventId).not('invited_at','is',null);
+    const { count: used } = await supabaseClient.from('guests').select('*', { count:'exact', head:true }).eq('event_id', eventId).eq('qr_status','used');
+    const pending = counts.total - counts.confirmed - (declined||0);
+    const notInvited = counts.total - (invited||0);
+    contentHtml = overviewTabHtml(ev, counts.total, counts.confirmed, declined||0, pending, invited||0, notInvited, used||0);
+  } else if(tab === 'guests'){
+    await fetchGuests(eventId);
+    contentHtml = guestsTabHtml();
+  } else if(tab === 'send'){
+    await fetchGuests(eventId);
+    contentHtml = sendTabHtml();
+  } else if(tab === 'barcode'){
+    await fetchBarcodeSettings(eventId);
+    await fetchBarcodeFolders(eventId);
+    await fetchGenericTickets(eventId);
+    contentHtml = barcodeTabHtml();
+  } else if(tab === 'scan'){
+    contentHtml = scanTabHtml();
+  }
+
+  mount(`
+    ${renderTopbar()}
+    <main>
+      <div class="container">
+        <button class="back-link" onclick="location.hash='#/dashboard'">→ العودة إلى مناسباتي</button>
+        <div class="page-head">
+          <h1>${escapeHtml(ev.name)}</h1>
+          <p class="muted" style="margin-top:4px">${formatDateTimeStamp(ev.event_date, ev.event_time)} — ${escapeHtml(ev.location)}</p>
+        </div>
+        <div class="tabs">
+          <button class="tab-btn ${tab==='overview'?'active':''}" onclick="location.hash='#/event/${ev.id}/overview'">نظرة عامة</button>
+          <button class="tab-btn ${tab==='guests'?'active':''}" onclick="location.hash='#/event/${ev.id}/guests'">الضيوف</button>
+          <button class="tab-btn ${tab==='send'?'active':''}" onclick="location.hash='#/event/${ev.id}/send'">الإرسال</button>
+          <button class="tab-btn ${tab==='barcode'?'active':''}" onclick="location.hash='#/event/${ev.id}/barcode'">الباركود</button>
+          <button class="tab-btn ${tab==='scan'?'active':''}" onclick="location.hash='#/event/${ev.id}/scan'">ماسح الدخول</button>
+        </div>
+        <div id="tab-content">${contentHtml}</div>
+      </div>
+    </main>
+  `);
+
+  if(tab === 'scan') initScanner(eventId);
+  if(tab === 'barcode') drawAllGenericQrs();
+}
+
+function overviewTabHtml(ev, total, confirmed, declined, pending, invited, notInvited, used){
+  return `
+    <div class="stats-grid" style="margin-bottom:26px">
+      <div class="stat-card"><div class="num">${total}</div><div class="lbl">عدد الضيوف</div></div>
+      <div class="stat-card"><div class="num">${confirmed}</div><div class="lbl">مؤكدون</div></div>
+      <div class="stat-card"><div class="num">${declined}</div><div class="lbl">معتذرون</div></div>
+      <div class="stat-card"><div class="num">${pending}</div><div class="lbl">بانتظار الرد</div></div>
+      <div class="stat-card"><div class="num">${invited}</div><div class="lbl">دعوات مرسلة</div></div>
+      <div class="stat-card"><div class="num">${notInvited}</div><div class="lbl">لم تُرسل بعد</div></div>
+      <div class="stat-card"><div class="num">${used}</div><div class="lbl">تم تسجيل دخولهم</div></div>
+    </div>
+    <div class="card">
+      <h3>تفاصيل المناسبة</h3>
+      <div class="stack gap-1" style="margin-top:10px">
+        ${ev.description ? `<p class="muted">${escapeHtml(ev.description)}</p>` : ''}
+      </div>
+      <div class="row gap-2 wrap" style="margin-top:18px">
+        <button class="btn btn-outline btn-sm" onclick="copyToClipboard('${buildOwnerStatsUrl(ev.owner_token)}')">نسخ رابط الإحصائيات</button>
+        <button class="btn btn-rose btn-sm" onclick="handleDeleteEvent('${ev.id}')">حذف المناسبة</button>
+      </div>
+    </div>
+  `;
+}
+
+
+/* ============================================================
+   الضيوف
+   ============================================================ */
+async function fetchGuests(eventId){
+  const { data, error } = await supabaseClient
+    .from('guests').select('*').eq('event_id', eventId).order('ticket_number', { ascending: true });
+  if(error){ toast('تعذر تحميل الضيوف', true); return []; }
+  state.guests = data;
+  return data;
+}
+
+function parseGuestLines(raw){
+  const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
+  const valid = [], invalid = [];
+  lines.forEach(line => {
+    let name = null, phone = null, companions = 0;
+    const parts = (line.includes(',') ? line.split(',') : (line.includes('\t') ? line.split('\t') : line.split(/\s+/))).map(p => p.trim());
+    if(parts.length >= 3){
+      name = parts[0]; phone = parts[1];
+      const n = parseInt(parts[2], 10);
+      companions = (!isNaN(n) && n >= 0) ? n : 0;
+    } else if(parts.length === 2){
+      name = parts[0]; phone = parts[1];
+    } else {
+      phone = parts[0];
+    }
+    if(isValidSaudiPhone(phone)) valid.push({ name: name || null, phone, companions });
+    else invalid.push(line);
+  });
+  return { valid, invalid };
+}
+
+async function handleAddGuests(e){
+  e.preventDefault();
+  const btn = $('#guests-submit-btn');
+  const raw = $('#guests-bulk').value;
+  const { valid, invalid } = parseGuestLines(raw);
+  if(valid.length === 0){ toast('لم يتم العثور على أرقام صحيحة (الصيغة: 05xxxxxxxx)', true); return; }
+  setBtnLoading(btn, true, '...جاري الإضافة');
+  const rows = valid.map(v => ({
+    event_id: state.currentEvent.id, name: v.name, phone: v.phone, companions_count: v.companions || 0
+  }));
+  const { error } = await supabaseClient.from('guests').insert(rows);
+  setBtnLoading(btn, false);
+  if(error){ toast('تعذرت إضافة الضيوف', true); return; }
+  closeModal();
+  toast(`تمت إضافة ${valid.length} ضيف` + (invalid.length ? ` — تم تجاهل ${invalid.length} رقم غير صحيح` : ''));
+  location.hash = '#/event/' + state.currentEvent.id + '/guests';
+  route();
+}
+
+async function handleDeleteGuest(guestId){
+  if(!confirm('حذف هذا الضيف؟')) return;
+  const { error } = await supabaseClient.from('guests').delete().eq('id', guestId);
+  if(error){ toast('تعذر الحذف', true); return; }
+  toast('تم حذف الضيف');
+  location.hash = '#/event/' + state.currentEvent.id + '/guests';
+  route();
+}
+
+function openAddGuestsModal(){
+  openModal(`
+    <h2 style="margin-bottom:6px">إضافة ضيوف</h2>
+    <p class="muted" style="margin-bottom:18px;font-size:13.5px">سطر لكل ضيف — الاسم، الجوال، وعدد المرافقين (اختياري)، مثال:<br>سالم العتيبي, 0501234567, 2</p>
+    <form onsubmit="handleAddGuests(event)">
+      <div class="field">
+        <label>الضيوف</label>
+        <textarea id="guests-bulk" rows="7" required placeholder="سالم العتيبي, 0501234567, 2&#10;نورة القحطاني, 0559876543&#10;0567654321"></textarea>
+        <div class="hint">عدد المرافقين اختياري لكل سطر — إن لم يُذكر تكون القيمة 0. يمكن كتابة رقم فقط بدون اسم</div>
+      </div>
+      <div class="row gap-2" style="margin-top:22px">
+        <button type="button" class="btn btn-outline" style="flex:1" onclick="closeModal()">إلغاء</button>
+        <button id="guests-submit-btn" type="submit" class="btn btn-primary" style="flex:1">إضافة</button>
+      </div>
+    </form>
+  `);
+}
+
+function statusBadge(status){
+  if(status === 'confirmed') return `<span class="badge badge-confirmed">✅ مؤكد</span>`;
+  if(status === 'declined') return `<span class="badge badge-declined">❌ معتذر</span>`;
+  return `<span class="badge badge-pending">بانتظار الرد</span>`;
+}
+
+function guestsTabHtml(){
+  const rows = state.guests.map(g => `
+    <div class="guest-row">
+      <div class="info">
+        <span class="g-name">${escapeHtml(g.name || 'بدون اسم')} <span class="muted" style="font-weight:400;font-size:12.5px">#${g.ticket_number ?? ''}</span></span>
+        <span class="g-phone">${escapeHtml(g.phone)}</span>
+      </div>
+      <div class="actions">
+        ${statusBadge(g.status)}
+        ${g.qr_status === 'used' ? `<button class="btn btn-outline btn-sm" onclick="handleReactivateTicket('guest','${g.id}')">إعادة تفعيل</button>` : ''}
+        <button class="link-copy" onclick="copyToClipboard('${buildInviteUrl(g.invite_token)}')">نسخ الرابط</button>
+        <button class="icon-btn" style="background:var(--rose-soft);border-color:transparent;color:var(--rose)" onclick="handleDeleteGuest('${g.id}')">✕</button>
+      </div>
+    </div>
+  `).join('');
+
+  return `
+    <div class="row between wrap gap-2" style="margin-bottom:18px">
+      <h3 style="margin:0">قائمة الضيوف (${state.guests.length})</h3>
+      <button class="btn btn-gold btn-sm" onclick="openAddGuestsModal()">+ إضافة ضيوف</button>
+    </div>
+    ${state.guests.length === 0 ? `<div class="empty"><span class="em-icon">✦</span>لم تتم إضافة ضيوف بعد</div>` : rows}
+  `;
+}
+
+/* ============================================================
+   صفحة الإرسال
+   ============================================================ */
+const DEFAULT_INVITE_MSG = 'السلام عليكم\nيسرنا دعوتكم لحضور المناسبة';
+
+async function markInvited(guestId){
+  await supabaseClient.from('guests').update({ invited_at: new Date().toISOString() }).eq('id', guestId);
+  const g = state.guests.find(x => x.id === guestId);
+  if(g) g.invited_at = new Date().toISOString();
+  const row = document.querySelector(`[data-send-row="${guestId}"]`);
+  if(row){
+    row.classList.add('sent');
+    const badge = row.querySelector('.send-status-badge');
+    if(badge){ badge.textContent = 'تم الإرسال'; badge.className = 'badge badge-confirmed send-status-badge'; }
+  }
+  updateSendStats();
+}
+
+function updateSendStats(){
+  const sentCount = state.guests.filter(g => g.invited_at).length;
+  const elSent = $('#send-stat-sent');
+  const elPending = $('#send-stat-pending');
+  if(elSent) elSent.textContent = sentCount;
+  if(elPending) elPending.textContent = state.guests.length - sentCount;
+}
+
+function sendToGuest(guestId, inviteToken, phone){
+  const guest = state.guests.find(g => g.id === guestId);
+  const guestName = guest && guest.name ? guest.name.trim() : '';
+  const namePrefix = guestName ? `المكرمة:\n${guestName}\n\n` : '';
+  const msgBox = $('#send-message');
+  const base = (msgBox ? msgBox.value : DEFAULT_INVITE_MSG).trim();
+  const fullMsg = `${namePrefix}${base}\n\nرابط الدعوة:\n${buildInviteUrl(inviteToken)}`;
+  const waUrl = `https://wa.me/${normalizePhoneForWa(phone)}?text=${encodeURIComponent(fullMsg)}`;
+  window.open(waUrl, '_blank');
+  markInvited(guestId);
+}
+
+function sendTabHtml(){
+  const sentCount = state.guests.filter(g => g.invited_at).length;
+  const rows = state.guests.map(g => `
+    <div class="guest-row ${g.invited_at ? 'sent' : ''}" data-send-row="${g.id}">
+      <div class="info">
+        <span class="g-name">${escapeHtml(g.name || 'بدون اسم')}</span>
+        <span class="g-phone">${escapeHtml(g.phone)}</span>
+      </div>
+      <div class="actions">
+        <span class="badge ${g.invited_at ? 'badge-confirmed' : 'badge-pending'} send-status-badge">${g.invited_at ? 'تم الإرسال' : 'لم يتم الإرسال'}</span>
+        <button class="send-btn" onclick="sendToGuest('${g.id}','${g.invite_token}','${g.phone}')">واتساب — إرسال</button>
+      </div>
+    </div>
+  `).join('');
+
+  return `
+    <div class="stats-grid" style="margin-bottom:22px">
+      <div class="stat-card"><div class="num" id="send-stat-sent">${sentCount}</div><div class="lbl">رسائل مرسلة</div></div>
+      <div class="stat-card"><div class="num" id="send-stat-pending">${state.guests.length - sentCount}</div><div class="lbl">لم تُرسل بعد</div></div>
+    </div>
+    <div class="send-msgbox card">
+      <label style="display:block;font-size:14px;font-weight:600;color:var(--ink-soft);margin-bottom:8px">نص الرسالة (سيُضاف رابط الدعوة تلقائياً في النهاية)</label>
+      <textarea id="send-message" rows="4">${escapeHtml(DEFAULT_INVITE_MSG)}</textarea>
+    </div>
+    <div style="margin-top:20px">
+      ${state.guests.length === 0 ? `<div class="empty"><span class="em-icon">✦</span>أضف ضيوفاً أولاً من تبويب الضيوف</div>` : `<div class="send-list">${rows}</div>`}
+    </div>
+  `;
+}
+
+
+/* ============================================================
+   صفحة الدعوة العامة (بدون تسجيل دخول)
+   ============================================================ */
+async function renderPublicInvite(inviteToken){
+  mount(`<div class="loading-block"><div class="spinner"></div></div>`);
+  const { data, error } = await supabaseClient.rpc('get_guest_invite', { p_invite_token: inviteToken });
+  if(error || !data){
+    mount(`
+      <div class="invite-page">
+        <div class="container center-text" style="padding-top:80px">
+          <h2>الدعوة غير موجودة</h2>
+          <p class="muted">تحقق من الرابط أو تواصل مع منظّم المناسبة</p>
+        </div>
+      </div>
+    `);
+    return;
+  }
+
+  const compText = companionsText(data.companions_count, data.companions_format);
+  let bodyHtml = '';
+
+  if(data.status === 'pending'){
+    bodyHtml = `
+      <div class="rsvp-actions">
+        <button class="rsvp-btn rsvp-yes" onclick="respondInvite('${inviteToken}','confirmed')">✅ سأحضر</button>
+        <button class="rsvp-btn rsvp-no" onclick="respondInvite('${inviteToken}','declined')">❌ لن أتمكن</button>
+      </div>
+    `;
+  } else if(data.status === 'declined'){
+    bodyHtml = `
+      <div class="status-msg declined">
+        <span class="s-icon">❌</span>
+        <h3>تم تسجيل اعتذاركم</h3>
+        <p style="margin:0">نتمنى لكم مناسبة سعيدة</p>
+      </div>
+    `;
+  } else if(data.status === 'confirmed'){
+    const hasName = !!(data.guest_name && data.guest_name.trim());
+    const primaryLabel = hasName ? escapeHtml(data.guest_name) : `تذكرة رقم ${data.ticket_number ?? ''}`;
+    bodyHtml = `
+      <div class="status-msg confirmed">
+        <span class="s-icon">✅</span>
+        <h3>نشكركم لقبول الدعوة</h3>
+      </div>
+      <div class="ticket">
+        <div class="t-name">${primaryLabel}</div>
+        ${compText ? `<div class="t-companions">${escapeHtml(compText)}</div>` : ''}
+        <div class="perforation"></div>
+        <div class="qr-wrap" id="qr-canvas"></div>
+        ${hasName ? `<div class="t-number center-text">تذكرة رقم ${data.ticket_number ?? ''}</div>` : ''}
+      </div>
+    `;
+  }
+
+  mount(`
+    <div class="invite-page">
+      <div class="invite-hero">
+        ${data.image_url ? `<img src="${escapeHtml(data.image_url)}" alt="">` : ''}
+        <div class="hero-fade"></div>
+      </div>
+      <div class="container narrow" style="padding:0">
+        <div class="invite-card">
+          <div class="event-name">${escapeHtml(data.event_name)}</div>
+          <p class="welcome">مرحباً، <span class="g-name">${escapeHtml(data.guest_name || 'ضيفنا العزيز')}</span></p>
+          <p class="sub">هذه الدعوة خاصة بكم</p>
+
+          <div class="invite-details">
+            <div class="d-row"><span class="d-icon">📅</span> ${formatDateAr(data.event_date)}</div>
+            <div class="d-row"><span class="d-icon">🕐</span> ${formatTimeAr(data.event_time)}</div>
+            <div class="d-row"><span class="d-icon">📍</span> ${escapeHtml(data.location)}</div>
+          </div>
+          ${data.description ? `<p class="invite-desc">${escapeHtml(data.description)}</p>` : ''}
+
+          ${bodyHtml}
+        </div>
+      </div>
+    </div>
+  `);
+
+  if(data.status === 'confirmed'){
+    drawQr('qr-canvas', data.qr_token, data.barcode_color || '#16352B');
+  }
+}
+
+async function respondInvite(inviteToken, status){
+  const { error } = await supabaseClient.rpc('respond_to_invite', { p_invite_token: inviteToken, p_status: status });
+  if(error){ toast('تعذر تسجيل ردكم، حاول مرة أخرى', true); return; }
+  renderPublicInvite(inviteToken);
+}
+
+function drawQr(elementId, text, colorDark){
+  const container = document.getElementById(elementId);
+  if(!container || typeof QRCode === 'undefined') return;
+  container.innerHTML = '';
+  new QRCode(container, {
+    text: String(text),
+    width: 172, height: 172,
+    colorDark: colorDark || '#16352B',
+    colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.M
+  });
+}
+
+/* ============================================================
+   صفحة إحصائيات صاحب المناسبة (قراءة فقط، بدون تسجيل دخول)
+   ============================================================ */
+async function renderOwnerStats(ownerToken){
+  mount(`<div class="loading-block"><div class="spinner"></div></div>`);
+  const { data, error } = await supabaseClient.rpc('get_owner_stats', { p_owner_token: ownerToken });
+  if(error || !data){
+    mount(`
+      <div class="invite-page">
+        <div class="container center-text" style="padding-top:80px">
+          <h2>الرابط غير صحيح</h2>
+          <p class="muted">تحقق من الرابط أو تواصل مع منظّم المناسبة</p>
+        </div>
+      </div>
+    `);
+    return;
+  }
+
+  const s = data.stats;
+  const statusInfo = { confirmed: ['✅','مؤكد'], declined: ['❌','معتذر'], pending: ['⏳','بانتظار الرد'] };
+  const guestRows = (data.guests || []).map(g => {
+    const [icon, text] = statusInfo[g.status] || statusInfo.pending;
+    const cls = g.status === 'confirmed' ? 'badge-confirmed' : g.status === 'declined' ? 'badge-declined' : 'badge-pending';
+    return `
+      <div class="guest-row">
+        <div class="info"><span class="g-name">${escapeHtml(g.name || 'بدون اسم')}</span></div>
+        <div class="actions"><span class="badge ${cls}">${icon} ${text}</span></div>
+      </div>
+    `;
+  }).join('');
+
+  mount(`
+    <header class="topbar">
+      <div class="container row between">
+        <span class="brand"><span class="mark">✦</span> دعوات</span>
+        <span class="user-name">رابط إحصائيات — قراءة فقط</span>
+      </div>
+    </header>
+    <main>
+      <div class="container">
+        <div class="page-head">
+          <h1>${escapeHtml(data.event_name)}</h1>
+        </div>
+        <div class="stats-grid" style="margin-bottom:28px">
+          <div class="stat-card"><div class="num">${s.total}</div><div class="lbl">عدد الضيوف</div></div>
+          <div class="stat-card"><div class="num">${s.confirmed}</div><div class="lbl">مؤكدون</div></div>
+          <div class="stat-card"><div class="num">${s.declined}</div><div class="lbl">معتذرون</div></div>
+          <div class="stat-card"><div class="num">${s.pending}</div><div class="lbl">بانتظار الرد</div></div>
+          <div class="stat-card"><div class="num">${s.invited}</div><div class="lbl">دعوات مرسلة</div></div>
+          <div class="stat-card"><div class="num">${s.not_invited}</div><div class="lbl">لم تُرسل بعد</div></div>
+          <div class="stat-card"><div class="num">${s.used}</div><div class="lbl">تم تسجيل دخولهم</div></div>
+        </div>
+        <h3 style="margin-bottom:14px">قائمة الضيوف</h3>
+        ${guestRows || `<div class="empty"><span class="em-icon">✦</span>لا يوجد ضيوف بعد</div>`}
+      </div>
+    </main>
+  `);
+}
+
+
+/* ============================================================
+   إعدادات وتوليد الباركود
+   ============================================================ */
+async function fetchBarcodeSettings(eventId){
+  const { data } = await supabaseClient.from('barcode_settings').select('*').eq('event_id', eventId).maybeSingle();
+  state.barcodeSettings = data || {
+    event_id: eventId, barcode_color:'#16352B', number_color:'#16352B', number_size:16,
+    show_name:false, name_color:'#16352B', name_size:18
+  };
+  return state.barcodeSettings;
+}
+
+async function fetchGenericTickets(eventId){
+  const { data } = await supabaseClient.from('generic_tickets').select('*').eq('event_id', eventId).order('ticket_number');
+  state.genericTickets = data || [];
+  return state.genericTickets;
+}
+
+async function fetchBarcodeFolders(eventId){
+  const { data } = await supabaseClient.from('barcode_folders').select('*').eq('event_id', eventId).order('created_at');
+  state.barcodeFolders = data || [];
+  return state.barcodeFolders;
+}
+
+async function handleCreateFolder(e){
+  e.preventDefault();
+  const btn = $('#folder-submit-btn');
+  const name = $('#folder-name').value.trim();
+  if(!name){ toast('أدخل اسم المجلد', true); return; }
+  setBtnLoading(btn, true, '...');
+  const { error } = await supabaseClient.from('barcode_folders').insert({ event_id: state.currentEvent.id, name });
+  setBtnLoading(btn, false);
+  if(error){ toast('تعذر إنشاء المجلد', true); return; }
+  toast('تم إنشاء المجلد');
+  location.hash = '#/event/' + state.currentEvent.id + '/barcode';
+  route();
+}
+
+async function handleSaveBarcodeSettings(e){
+  e.preventDefault();
+  const btn = $('#barcode-settings-btn');
+  const settings = {
+    event_id: state.currentEvent.id,
+    barcode_color: $('#bc-color').value,
+    number_color: $('#bc-num-color').value,
+    number_size: parseInt($('#bc-num-size').value, 10) || 16,
+    show_name: $('#bc-show-name').checked,
+    name_color: $('#bc-name-color').value,
+    name_size: parseInt($('#bc-name-size').value, 10) || 18
+  };
+  setBtnLoading(btn, true, '...جاري الحفظ');
+  const { error } = await supabaseClient.from('barcode_settings').upsert(settings, { onConflict:'event_id' });
+  setBtnLoading(btn, false);
+  if(error){ toast('تعذر حفظ الإعدادات', true); return; }
+  toast('تم حفظ إعدادات الباركود');
+  state.barcodeSettings = settings;
+  location.hash = '#/event/' + state.currentEvent.id + '/barcode';
+  route();
+}
+
+async function handleGenerateTickets(e){
+  e.preventDefault();
+  const btn = $('#generate-tickets-btn');
+  const count = parseInt($('#bc-gen-count').value, 10);
+  const folderId = $('#bc-gen-folder').value;
+  const label = state.barcodeSettings.show_name ? ($('#bc-gen-label').value.trim() || null) : null;
+  if(!folderId){ toast('اختر المجلد أولاً', true); return; }
+  if(!count || count < 1 || count > 500){ toast('أدخل عدداً بين 1 و 500', true); return; }
+  setBtnLoading(btn, true, '...جاري التوليد');
+  const rows = Array.from({length: count}, () => ({ event_id: state.currentEvent.id, folder_id: folderId, label }));
+  const { error } = await supabaseClient.from('generic_tickets').insert(rows);
+  setBtnLoading(btn, false);
+  if(error){ toast('تعذر توليد الباركودات', true); return; }
+  toast(`تم توليد ${count} باركود`);
+  location.hash = '#/event/' + state.currentEvent.id + '/barcode';
+  route();
+}
+
+async function handleReactivateTicket(kind, id){
+  const table = kind === 'guest' ? 'guests' : 'generic_tickets';
+  const { error } = await supabaseClient.from(table).update({ qr_status:'active', first_scan_at:null }).eq('id', id);
+  if(error){ toast('تعذرت إعادة التفعيل', true); return; }
+  toast('تمت إعادة التفعيل');
+  location.hash = '#/event/' + state.currentEvent.id + '/barcode';
+  route();
+}
+
+function ticketStatusBadge(status){
+  if(status === 'used') return `<span class="badge badge-used">مستخدم</span>`;
+  if(status === 'disabled') return `<span class="badge badge-declined">معطّل</span>`;
+  return `<span class="badge badge-confirmed">نشط</span>`;
+}
+
+function ticketMiniHtml(t, s){
+  return `
+    <div class="ticket-mini">
+      <div id="gqr-${t.id}" style="display:flex;justify-content:center;margin-bottom:8px"></div>
+      <div style="font-weight:700;font-size:${s.show_name && t.label ? s.name_size : s.number_size}px;color:${s.show_name && t.label ? s.name_color : s.number_color}">
+        ${s.show_name && t.label ? escapeHtml(t.label) : ('#' + t.ticket_number)}
+      </div>
+      <div style="margin-top:6px">${ticketStatusBadge(t.qr_status)}</div>
+      ${t.qr_status === 'used' ? `<button class="btn btn-outline btn-sm" style="margin-top:8px" onclick="handleReactivateTicket('generic','${t.id}')">إعادة تفعيل</button>` : ''}
+    </div>
+  `;
+}
+
+function barcodeTabHtml(){
+  const s = state.barcodeSettings;
+  const folders = state.barcodeFolders;
+  const folderOptions = folders.map(f => `<option value="${f.id}">${escapeHtml(f.name)}</option>`).join('');
+
+  const groupedHtml = folders.map(f => {
+    const items = state.genericTickets.filter(t => t.folder_id === f.id);
+    if(items.length === 0) return '';
+    return `
+      <div style="margin-bottom:24px">
+        <h4 style="margin-bottom:12px">${escapeHtml(f.name)} <span class="muted" style="font-weight:400;font-size:13px">(${items.length})</span></h4>
+        <div class="tickets-grid">${items.map(t => ticketMiniHtml(t, s)).join('')}</div>
+      </div>
+    `;
+  }).join('');
+
+  return `
+    <div class="card" style="margin-bottom:22px">
+      <h3>تنسيق الباركود</h3>
+      <p class="muted" style="font-size:13.5px;margin-bottom:18px">هذا التنسيق يُطبّق على جميع تذاكر هذه المناسبة</p>
+      <form onsubmit="handleSaveBarcodeSettings(event)">
+        <div class="field">
+          <label>لون الباركود</label>
+          <div class="color-row"><input id="bc-color" type="color" value="${s.barcode_color}"></div>
+        </div>
+        <div class="row gap-2">
+          <div class="field" style="flex:1">
+            <label>لون الرقم</label>
+            <div class="color-row"><input id="bc-num-color" type="color" value="${s.number_color}"></div>
+          </div>
+          <div class="field" style="flex:1">
+            <label>حجم الرقم</label>
+            <input id="bc-num-size" type="number" min="10" max="40" value="${s.number_size}">
+          </div>
+        </div>
+        <div class="field row gap-1" style="align-items:center">
+          <input id="bc-show-name" type="checkbox" style="width:auto" ${s.show_name?'checked':''} onchange="$('#name-style-fields').style.display=this.checked?'block':'none'">
+          <label style="margin:0">إضافة اسم فوق الباركود بدلاً من الترقيم (للتذاكر العامة)</label>
+        </div>
+        <div id="name-style-fields" style="display:${s.show_name?'block':'none'}">
+          <div class="row gap-2">
+            <div class="field" style="flex:1">
+              <label>لون الاسم</label>
+              <div class="color-row"><input id="bc-name-color" type="color" value="${s.name_color}"></div>
+            </div>
+            <div class="field" style="flex:1">
+              <label>حجم الاسم</label>
+              <input id="bc-name-size" type="number" min="10" max="40" value="${s.name_size}">
+            </div>
+          </div>
+        </div>
+        <button id="barcode-settings-btn" type="submit" class="btn btn-primary btn-block">حفظ التنسيق</button>
+      </form>
+    </div>
+
+    <div class="card" style="margin-bottom:22px">
+      <h3>مجلدات الباركود</h3>
+      <p class="muted" style="font-size:13.5px;margin-bottom:16px">لتنظيم التذاكر العامة — مثال: VIP، عائلة العروس، عائلة العريس، منظمات، دعوات خاصة</p>
+      <form onsubmit="handleCreateFolder(event)" class="row gap-2" style="align-items:flex-end;margin-bottom:${folders.length?'16px':'0'}">
+        <div class="field" style="flex:1;margin-bottom:0">
+          <label>مجلد جديد</label>
+          <input id="folder-name" type="text" placeholder="مثال: VIP" required>
+        </div>
+        <button id="folder-submit-btn" type="submit" class="btn btn-outline">+ إضافة</button>
+      </form>
+      ${folders.length ? `<div class="row wrap gap-1">${folders.map(f=>`<span class="badge badge-pending">${escapeHtml(f.name)}</span>`).join('')}</div>` : ''}
+    </div>
+
+    <div class="card" style="margin-bottom:26px">
+      <h3>توليد تذاكر عامة</h3>
+      <p class="muted" style="font-size:13.5px;margin-bottom:18px">لتذاكر إضافية غير مرتبطة بضيف محدد (دخول عام، فريق العمل...)</p>
+      ${folders.length === 0 ? `
+        <p class="muted" style="margin:0">أنشئ مجلداً واحداً على الأقل أولاً قبل توليد التذاكر</p>
+      ` : `
+      <form onsubmit="handleGenerateTickets(event)">
+        <div class="row gap-2 wrap" style="align-items:flex-end">
+          <div class="field" style="flex:1;min-width:100px;margin-bottom:0">
+            <label>العدد</label>
+            <input id="bc-gen-count" type="number" min="1" max="500" value="10">
+          </div>
+          <div class="field" style="flex:1;min-width:140px;margin-bottom:0">
+            <label>المجلد</label>
+            <select id="bc-gen-folder">${folderOptions}</select>
+          </div>
+          ${s.show_name ? `
+          <div class="field" style="flex:1;min-width:140px;margin-bottom:0">
+            <label>الاسم الظاهر فوق كل تذكرة</label>
+            <input id="bc-gen-label" type="text" placeholder="مثال: دخول عام">
+          </div>` : ''}
+          <button id="generate-tickets-btn" type="submit" class="btn btn-gold">توليد</button>
+        </div>
+      </form>
+      `}
+    </div>
+
+    ${state.genericTickets.length ? `
+      <div class="row between" style="margin-bottom:14px">
+        <h3 style="margin:0">التذاكر المولّدة (${state.genericTickets.length})</h3>
+        <button class="btn btn-outline btn-sm" onclick="window.print()">طباعة</button>
+      </div>
+      ${groupedHtml}
+    ` : ''}
+  `;
+}
+
+function drawAllGenericQrs(){
+  state.genericTickets.forEach(t => drawQr('gqr-' + t.id, t.qr_token, state.barcodeSettings.barcode_color));
+}
+
+
+/* ============================================================
+   ماسح الباركود
+   ============================================================ */
+let html5QrScanner = null;
+
+function scanTabHtml(){
+  return `
+    <div class="card">
+      <h3>امسح رمز الدخول</h3>
+      <p class="muted" style="font-size:13.5px;margin-bottom:16px">وجّه كاميرا الجوال نحو رمز QR الخاص بالضيف</p>
+      <div id="qr-reader"></div>
+      <div id="scan-result-area"></div>
+    </div>
+  `;
+}
+
+function initScanner(eventId){
+  if(html5QrScanner){ try{ html5QrScanner.clear(); }catch(e){} html5QrScanner = null; }
+  if(typeof Html5QrcodeScanner === 'undefined'){
+    $('#qr-reader').innerHTML = '<p class="muted">تعذر تحميل مكتبة المسح — تحقق من الاتصال بالإنترنت</p>';
+    return;
+  }
+  html5QrScanner = new Html5QrcodeScanner('qr-reader', { fps:10, qrbox:230 }, false);
+  html5QrScanner.render((decodedText)=>onScanSuccess(decodedText, eventId), ()=>{});
+}
+
+async function onScanSuccess(decodedText, eventId){
+  if(html5QrScanner){ try{ html5QrScanner.pause(true); }catch(e){} }
+  await handleScanResult((decodedText||'').trim(), eventId);
+}
+
+async function attemptCheckin(table, code, eventId, nowIso){
+  // تحويل ذرّي من active إلى used — يمنع تسجيل دخول مزدوج عند مسح نفس الرمز من جهازين في نفس اللحظة
+  const upd = await supabaseClient.from(table)
+    .update({ qr_status:'used', first_scan_at: nowIso })
+    .eq('qr_token', code).eq('event_id', eventId).eq('qr_status', 'active')
+    .select().maybeSingle();
+  if(upd.data) return { found:true, success:true, row: upd.data };
+
+  const cur = await supabaseClient.from(table).select('*').eq('qr_token', code).eq('event_id', eventId).maybeSingle();
+  if(cur.data) return { found:true, success:false, row: cur.data };
+  return { found:false };
+}
+
+async function handleScanResult(code, eventId){
+  const area = $('#scan-result-area');
+  const nowIso = new Date().toISOString();
+  let result = { found:false };
+  try{
+    result = await attemptCheckin('guests', code, eventId, nowIso);
+    if(!result.found) result = await attemptCheckin('generic_tickets', code, eventId, nowIso);
+  }catch(err){ result = { found:false }; }
+
+  if(!result.found){
+    area.innerHTML = `<div class="scan-result used"><span class="sr-icon">⚠️</span><h3>رمز غير معروف</h3><p style="margin:0">لا ينتمي هذا الرمز لهذه المناسبة</p></div>`;
+    setTimeout(resumeScanner, 2500);
+    return;
+  }
+
+  const data = result.row;
+
+  if(!result.success){
+    if(data.qr_status === 'disabled'){
+      area.innerHTML = `<div class="scan-result used"><span class="sr-icon">🚫</span><h3>هذا الباركود معطّل</h3></div>`;
+      setTimeout(resumeScanner, 2500);
+      return;
+    }
+    area.innerHTML = `
+      <div class="scan-result used">
+        <span class="sr-icon">❌</span>
+        <h3>تم استخدام هذا الباركود مسبقاً</h3>
+        <p style="margin:0">${formatArDateTime(data.first_scan_at)}</p>
+      </div>`;
+    setTimeout(resumeScanner, 2800);
+    return;
+  }
+
+  area.innerHTML = `
+    <div class="scan-result ok">
+      <span class="sr-icon">✅</span>
+      <h3>تم تسجيل الدخول بنجاح</h3>
+      <p style="margin:0">${escapeHtml(data.name || data.label || '')}</p>
+      <p style="margin:4px 0 0;font-size:13px">${formatArDateTime(nowIso)}</p>
+    </div>`;
+  setTimeout(resumeScanner, 2000);
+}
+
+function resumeScanner(){
+  const area = $('#scan-result-area');
+  if(area) area.innerHTML = '';
+  if(html5QrScanner){ try{ html5QrScanner.resume(); }catch(e){} }
+}
+
+
+/* ============================================================
+   الهيكل العام والتنقل (Router)
+   ============================================================ */
+function renderTopbar(){
+  return `
+    <header class="topbar">
+      <div class="container row between">
+        <a href="#/dashboard" class="brand"><span class="mark">✦</span> دعوات</a>
+        <div class="topbar-actions">
+          <span class="user-name">${escapeHtml(currentUserName())}</span>
+          <button class="icon-btn" title="تسجيل الخروج" onclick="handleLogout()">⏻</button>
+        </div>
+      </div>
+    </header>
+  `;
+}
+
+async function route(){
+  const inviteToken = getQueryParam('invite');
+  if(inviteToken){ await renderPublicInvite(inviteToken); return; }
+  const ownerToken = getQueryParam('owner');
+  if(ownerToken){ await renderOwnerStats(ownerToken); return; }
+
+  await checkSession();
+  const hash = location.hash.replace(/^#\/?/, '');
+  const parts = hash.split('/').filter(Boolean);
+
+  if(!state.user){
+    if(parts[0] === 'signup') renderSignup();
+    else renderLogin();
+    return;
+  }
+
+  if(!hash || parts[0] === 'login' || parts[0] === 'signup'){
+    location.hash = '#/dashboard';
+    return;
+  }
+
+  await fetchEvents();
+
+  if(parts[0] === 'event' && parts[1]){
+    renderEventDetail(parts[1], parts[2] || 'overview');
+  } else {
+    renderDashboard();
+  }
+}
+
+window.addEventListener('hashchange', route);
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await checkSession();
+  supabaseClient.auth.onAuthStateChange((_event, session) => {
+    state.user = session ? session.user : null;
+  });
+  route();
+});
+
+
+</script>
+</body>
+</html>
